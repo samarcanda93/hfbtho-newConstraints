@@ -292,6 +292,7 @@ Contains
           !kickoff = kickoff + 1
        End If
        !
+
        ! Add constraint on the distance fragment
        If(dfrag_constraints) Then
           numberCons = numberCons + 1
@@ -328,10 +329,11 @@ Contains
           multLambda(icons)=0
        End If
 
-       If(dfrag_constraints) Then
+       If(csi_constraints) Then
           icons=icons+1
           multLambda(icons)=0
        End If
+              
        !-------------------------------------------------------------
        ! Blocking
        !-------------------------------------------------------------
@@ -356,12 +358,20 @@ Contains
              End If
           End If
        End Do
+
+
+
+
        !-------------------------------------------------------------
        ! HFB+HO calculations
        !-------------------------------------------------------------
        If(ILST.Le.0) Then
+
           icacou=0; icahartree=0
+
           Call preparer(.True.)
+
+
           If(ierror_flag.Ne.0) Return
           ! Reading input file: if not possible, start from scratch
           Call inout(1,iexit)
@@ -370,6 +380,8 @@ Contains
           Else
              Call gamdel(.false.,.false.)
           End If
+
+
           If(ierror_flag.Ne.0) Return
           !-------------------------------------------------------------
           ! Preliminary constrained calculations
@@ -406,6 +418,8 @@ Contains
                 End If
              End Do
           End If
+
+                           
           !-------------------------------------------------------------
           ! REGULAR HFB+HO ITERATIONS
           !-------------------------------------------------------------
@@ -450,6 +464,7 @@ Contains
        !-------------------------------------------------------------
        ! HFB+THO calculations from *.tel
        !-------------------------------------------------------------
+
        If(ILST.Gt.0) Then
           If(inin.Gt.0) Then
              ierror_flag=ierror_flag+1
@@ -457,6 +472,7 @@ Contains
              Return
           End If
           icacou=0; icahartree=0
+
           Call preparer(.True.)
           If(ierror_flag.Ne.0) Return
           ! Reading input file: if not possible, start from scratch
@@ -796,6 +812,10 @@ Contains
     !-----------------------------------------
     ! print headings to screen/'thoout.dat'
     !-----------------------------------------
+
+
+
+    
     If(lpr) Then
        Call heading
        Call print_functional_parameters()
@@ -846,6 +866,7 @@ Contains
     ! basis parameter q
     !-----------------------------------------
     beta0=q; q=Exp((3.0_pr*Sqrt(5.0_pr/(16.0_pr*pi)))*beta0)
+
     !-----------------------------------------
     ! basis parameters b0,bp,bz
     !-----------------------------------------
@@ -863,6 +884,7 @@ Contains
        r00=r0*amas**p13; r02=r00**2; r04=r02**2
     End If
     bp=b0*q**(-one/6.0_pr); bz=b0*q**(one/3.0_pr); bpp=bp*bp
+
     !-----------------------------------------
     ! constraint in terms of beta
     !-----------------------------------------
@@ -876,6 +898,8 @@ Contains
     Else
        npr1pj=npr(1)+npr1pj; npr2pj=npr(2)+npr2pj
     End If
+
+
     !-----------------------------------------
     ! blocking window
     !-----------------------------------------
@@ -1021,25 +1045,35 @@ Contains
           End If
        End Do
     End If
+
+
     !-----------------------------------------
     ! BASIS, GAUSS POINTS, HOWF
     !-----------------------------------------
     Call gfv                      ! factorials
+
     If(ierror_flag.Ne.0) Return
     Call base0(lpr)               ! basis space (calculate configurational space)
+
     If(ierror_flag.Ne.0) Return
     Call thoalloc                 ! global allocation
+
     If(ierror_flag.Ne.0) Return
     Call gausspoints              ! GAUSS mesh points
+
     If(ierror_flag.Ne.0) Return
     Call base(lpr)                ! oscillator configurations (set up quantum numbers)
+
     If(ierror_flag.Ne.0) Return
     Call gaupol(lpr)              ! basis wf at gauss mesh points
+
     If(ierror_flag.Ne.0) Return
     If(finite_range) Then
        Call gogny_matrix_elements
     endif
     If(ierror_flag.Ne.0) Return
+
+
     !
   End Subroutine preparer
   !====================================================================
@@ -1144,6 +1178,7 @@ Contains
                          ept(2)+frept(2),delLN(2),alast(1),alast(2),time,wct_gogny
           End Do
        End If
+
        !-------------------------------------------------
        ! HFBDIAG
        !-------------------------------------------------
@@ -1151,15 +1186,29 @@ Contains
           Call hfbdiag(it,0)   ! hfb diagonalization with minimal canonical
           If(ierror_flag.Ne.0) Return
        End Do
+
+
        !-------------------------------------------------
        ! EXPECT, DENSIT, COULOMB, FIELD, GAMDEL
        !-------------------------------------------------
        Call expect(.False.)    ! expectation values
+
+
        If (numberCons.Gt.0) Call getLagrange(ite)   ! new Lagrange parameters for constraints
+
+
        If(ierror_flag.Ne.0) Return
+
+
        Call field              ! new fields
+
+
        If(ierror_flag.Ne.0) Return
+
+
        Call gamdel(.false.,.true.)    ! hf-matrix
+
+
        If(ierror_flag.Ne.0) Return
        !-------------------------------------------------
        ! Dumping control (old linear mixing)
@@ -1170,6 +1219,8 @@ Contains
        Else
           xmix=xmix0
        End If
+
+
        siold=si
        !-------------------------------------------------
        ! time per iteration
@@ -1180,6 +1231,7 @@ Contains
        !-------------------------------------------------
        ! Solution is OK within the iteration limit
        !-------------------------------------------------
+
        If(iiter.Ge.2.And.si.Lt.epsi) Then
           If(iLST1.Eq.0) Then
              iError_in_HO=0
@@ -3328,6 +3380,7 @@ Contains
     !-----------------------------------
     ! Saxon-Woods potentials
     !-----------------------------------
+
     Do iw=lout,lfile
        Write(iw,'(/,a)') '  Initial potentials of Saxon-Woods shape '
     End Do
@@ -3343,10 +3396,13 @@ Contains
        Write(iw,'(a,f14.8)')  '  b2_ws  =',b2_0
        Write(iw,'(a,f14.8)')  '  b4_ws  =',b4_0
     End Do
+
+
     !-----------------------------------
     ! Densities
     !-----------------------------------
     Do it=itmin,itmax
+
        ita=3-it; rav=r0v(it)*amas**p13; rao=rso(it)*amas**p13
        vpws=v0ws*(one-akv*(npr(it)-npr(ita))/amas)
        vls=half*(hqc/amu)**2*vpws*vso(it)
@@ -3393,6 +3449,8 @@ Contains
              aka(ihl,it)=5.0d-3*Exp((r-rav*facb)/2.0_pr)
           End Do
        End Do
+
+
        !s=npr(it)/Sum(ro(:,it))
        s=tz(it)/Sum(ro(:,it))
        Do il=1,ngl
@@ -3412,6 +3470,8 @@ Contains
           End If
        End Do
     End Do
+
+
     !-----------------------------------
     ! coulomb
     !-----------------------------------
@@ -4352,6 +4412,7 @@ Contains
     Real(pr) :: f_T(ndxmax),f1_T(ndxmax)
     Real(pr) :: dnrm2
     external dnrm2
+
     !
     If (IDEBUG.Eq.1) Call get_CPU_time('densit',0)
     !
@@ -4751,6 +4812,8 @@ Contains
     Real(pr),Dimension(2) :: tUr,tUt,tUNr,tUNz,tUDr,tUDj,tUFIZ,tUZFI,tUFIR,tURFI
     Real(pr), Save :: ALAMBDA=0.0_pr,AEPSI=1.0_pr,CSPR=1.0_pr
     !
+
+    
     If (IDEBUG.Eq.1) Call get_CPU_time('field',0)
     !
     Pi = 4.0_pr*Atan(1.0_pr)
@@ -4944,11 +5007,13 @@ Contains
        pUFIR(1)=tUFIR(1)+tUFIR(2);        pUFIR(2)=tUFIR(1)-tUFIR(2)
        pURFI(1)=tURFI(1)+tURFI(2);        pURFI(2)=tURFI(1)-tURFI(2)
        !
+
        Do it=itmin,itmax   !! loop over n  & p
           ita=3-it
 
 
           ic = 0
+
           If(neck_constraints) Then
              ic = ic +1
           End If
@@ -4969,8 +5034,7 @@ Contains
                 If(lambda.Ge.1) Then
                    pUr(it)= pUr(it) - multLag(lambda)*Qval(lambda)
                 End If
-             end do
-
+             end do                 
              If(neck_constraints) Then
                 pUr(it)= pUr(it) - neckLag*Exp(-((z-Z_NECK*bz)/AN_VAL)**2)
              End If
@@ -7371,6 +7435,7 @@ Contains
     !
     minu=-one
     epsilo=1.E-14
+
     !
     ! initializing the multipole moment template array
     Allocate(qmultt(0:lambdaMax));qmultt=zero
@@ -7388,8 +7453,11 @@ Contains
 
     ic = 0
     If (neck_constraints) ic = ic +1
+
     If (dfrag_constraints) ic = ic +1
+
     If (csi_constraints) ic = ic +1
+
 
     Do icons=1,numberCons-ic
        lambda=multLambda(icons)
@@ -7405,6 +7473,7 @@ Contains
        veclam(icons)=vecold(icons)
     End Do
 
+
     If (neck_constraints.and.ic.gt.0) Then
        cnsvec(numberCons-ic+1)=neckRequested-neckValue
        If (nbroyden.lt.1) Then
@@ -7417,16 +7486,25 @@ Contains
     End If
     
     If (dfrag_constraints.and.ic.gt.0) Then
+
        cnsvec(numberCons-ic+1)=dfragRequested-dfragValue
        If (nbroyden.lt.1) Then
+
           vecold(numberCons-ic+1)=dfragLag
+
        Else
+
           vecold(numberCons-ic+1)=brin(nhhdim4+lambdaMax+2)
+
        End If
+
+
        veclam(numberCons-ic+1)=vecold(numberCons-ic+1)
+             
        ic = ic - 1
     End If
-       
+
+
     If (csi_constraints.and.ic.gt.0) Then
        cnsvec(numberCons-ic+1)=csiRequested-csiValue
        If (nbroyden.lt.1) Then
@@ -7444,6 +7522,8 @@ Contains
     ! loop over the K blocks
     Allocate(cnsmat(numberCons,numberCons));cnsmat=zero
     Allocate(cnsorg(numberCons,numberCons));cnsorg=zero
+
+
     !
     i_uvN=0 ! new index referring to all q.p. vectors
     i_uvP=0 ! new index referring to all q.p. vectors
@@ -7485,7 +7565,7 @@ Contains
           End Do
           !
 
-          
+
           ic = 0
           If (neck_constraints) Then
              ic = ic + 1
@@ -7496,7 +7576,8 @@ Contains
           If (csi_constraints) Then
              ic = ic + 1
           End If
-          
+
+         
           Do icons=1,numberCons-ic
              !
              lambda=multLambda(icons)
@@ -7550,6 +7631,8 @@ Contains
              !
           End Do ! end icons (neutrons)
 
+
+
             
           If (neck_constraints.and.ic.gt.0) Then
              Allocate(gaussian_neck(1:nd2)); gaussian_neck=zero
@@ -7586,36 +7669,50 @@ Contains
              !
              ! temperature - computing \tilde{f}^{11}
              If(switch_on_temperature) Then
-               !
-               ! second term: v^{+} f^{*} v = v^{T} f v
-               Call dgemm('n','n',nd,kd(ib,it),nd,one,dblmul,nd,Vmatr,nd,zero,doubln,nd)
-               Call dgemm('t','n',kd(ib,it),kd(ib,it),nd,one,Vmatr,nd,doubln,nd,zero,fn11pl(1,1,numberCons-ic+1),kd(ib,it))
-               ! first term:  u^{+} f u = u^{T} f u
-               Call dgemm('n','n',nd,kd(ib,it),nd,one,dblmul,nd,Umatr,nd,zero,doubln,nd)
-               Call dgemm('t','n',kd(ib,it),kd(ib,it),nd,one,Umatr,nd,doubln,nd,minu,fn11pl(1,1,numberCons-ic+1),kd(ib,it))
-               !
-            End If
-
-            ic = ic -1
-                          
-            
-             !
-            If(Allocated(gaussian_neck)) Deallocate(gaussian_neck)                     
-            Deallocate(dblmul)
-            !
+                !
+                ! second term: v^{+} f^{*} v = v^{T} f v
+                Call dgemm('n','n',nd,kd(ib,it),nd,one,dblmul,nd,Vmatr,nd,zero,doubln,nd)
+                Call dgemm('t','n',kd(ib,it),kd(ib,it),nd,one,Vmatr,nd,doubln,nd,zero,fn11pl(1,1,numberCons-ic+1),kd(ib,it))
+                ! first term:  u^{+} f u = u^{T} f u
+                Call dgemm('n','n',nd,kd(ib,it),nd,one,dblmul,nd,Umatr,nd,zero,doubln,nd)
+                Call dgemm('t','n',kd(ib,it),kd(ib,it),nd,one,Umatr,nd,doubln,nd,minu,fn11pl(1,1,numberCons-ic+1),kd(ib,it))
+                !
+             End If
              
-         End If
-         
-         If (dfrag_constraints.and.ic.gt.0) Then
-            Allocate(ddfrag(1:nd2)); ddfrag=zero
-            Call dfrag_computeField(ib)
-            j=0
-            Do n1=1,nd
-               Do n2=1,n1
-                  j=j+1;hla=ddfrag(j)
-                  dblmul(n1,n2)=hla;dblmul(n2,n1)=hla
-               End Do
-            End Do
+             ic = ic -1
+             
+             
+             !
+             If(Allocated(gaussian_neck)) Deallocate(gaussian_neck)                     
+             Deallocate(dblmul)
+             !
+             
+          End If
+
+
+          
+          If (dfrag_constraints.and.ic.gt.0) Then
+
+             Allocate(ddfrag(1:nd2)); ddfrag=zero
+
+             Call dfrag_computeField(ib)
+             Allocate(dblmul(nd,nd));dblmul=zero
+
+             j=0
+             Do n1=1,nd
+                Do n2=1,n1
+
+                   j=j+1;hla=ddfrag(j)
+
+                   dblmul(n1,n2)=hla
+
+                   dblmul(n2,n1)=hla
+
+
+
+
+                End Do
+             End Do
 
 
              ! matrix of the constraint operator in the qp basis. due to
@@ -7660,6 +7757,8 @@ Contains
          If (csi_constraints.and.ic.gt.0) Then
             Allocate(ccsi(1:nd2)); ccsi=zero
             Call csi_computeField(ib)
+            Allocate(dblmul(nd,nd));dblmul=zero
+
             j=0
             Do n1=1,nd
                Do n2=1,n1
