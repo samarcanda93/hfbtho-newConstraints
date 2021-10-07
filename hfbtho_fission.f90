@@ -1326,7 +1326,7 @@ Contains
   Subroutine dfrag_computeField(ib)
     Implicit None
     Integer(ipr), Intent(in) :: ib !< Index of the current block
-    Integer(ipr) :: i,ih,il,nd,nd2,ihli,ihil,im,n1,n2
+    Integer(ipr) :: i,ih,il,nd,nd2,ihli,ihil,im,n1,n2,it
     Integer(ipr) :: ja,jb,nsa,nsb,nsab,ssu,ssd
     Real(pr)    :: qhla,vh,fiun1,fiun2,fidn1,fidn2,vnhl
     Real(pr), Allocatable :: Vmom(:)
@@ -1335,15 +1335,35 @@ Contains
     Integer(ipr) :: ndxmax
     Parameter(ndxmax=(n00max+2)*(n00max+2)/4)
     Real(pr) :: OMPFIU(ndxmax),OMPFID(ndxmax)
+    Real(pr) :: QLMLEF,QLMRIG
+    Integer(ipr) :: LAMACT,I_TYPE
+
+
     !
+
+
+    If(.Not.Allocated(QLMTOT)) Allocate(QLMTOT(0:lambdaMax,0:1),QLMPRO(0:lambdaMax,0:1))
+    I_TYPE=1
+    Do LAMACT=0,lambdaMax
+       Call QLMFRA(Z_NECK,LAMACT,QLMLEF,QLMRIG,CENLEF,CENRIG,I_TYPE)
+       QLMTOT(LAMACT,0) = QLMLEF
+       QLMTOT(LAMACT,1) = QLMRIG
+    End Do
+    !
+    
     Allocate(Vmom(1:nghl))
     !
     Qval=zero
+    Vmom =zero
     !
     ! Compute value of fragment distance operator on integration mesh
     Do ihli = 1,nghl
        z=fh(ihli)
-       Vmom(ihli)=CENRIG-CENLEF
+       If (z.le.Z_NECK) Then
+          Vmom(ihli)= z*(ro(ihli,1)+ro(ihli,2))/QLMLEF
+       Else
+          Vmom(ihli)= - z*(ro(ihli,1)+ro(ihli,2))/QLMRIG
+       End If
     End Do !ihli
     !
     ! Form matrix of the fragment distance operator in HO basis
@@ -1384,10 +1404,10 @@ Contains
   End Subroutine dfrag_computeField
 
 
-    Subroutine csi_computeField(ib)
+  Subroutine csi_computeField(ib)
     Implicit None
     Integer(ipr), Intent(in) :: ib !< Index of the current block
-    Integer(ipr) :: i,ih,il,nd,nd2,ihli,ihil,im,n1,n2
+    Integer(ipr) :: i,ih,il,nd,nd2,ihli,ihil,im,n1,n2,it
     Integer(ipr) :: ja,jb,nsa,nsb,nsab,ssu,ssd
     Real(pr)    :: qhla,vh,fiun1,fiun2,fidn1,fidn2,vnhl
     Real(pr), Allocatable :: Vmom(:)
@@ -1396,17 +1416,34 @@ Contains
     Integer(ipr) :: ndxmax
     Parameter(ndxmax=(n00max+2)*(n00max+2)/4)
     Real(pr) :: OMPFIU(ndxmax),OMPFID(ndxmax)
+    Real(pr) :: QLMLEF,QLMRIG
+    Integer(ipr) :: LAMACT,I_TYPE
+
+    If(.Not.Allocated(QLMTOT)) Allocate(QLMTOT(0:lambdaMax,0:1),QLMPRO(0:lambdaMax,0:1))
+    I_TYPE=1
+    Do LAMACT=0,lambdaMax
+       Call QLMFRA(Z_NECK,LAMACT,QLMLEF,QLMRIG,CENLEF,CENRIG,I_TYPE)
+       QLMTOT(LAMACT,0) = QLMLEF
+       QLMTOT(LAMACT,1) = QLMRIG
+    End Do
     !
+    
+    
     Allocate(Vmom(1:nghl))
     !
     Qval=zero
+    Vmom =zero
     !
     ! Compute value of fragment distance operator on integration mesh
     Do ihli = 1,nghl
        z=fh(ihli)
-       Vmom(ihli)=(QLMTOT(0,0)-QLMTOT(0,1))/(QLMTOT(0,0)+QLMTOT(0,1))  
+       If (z.le.Z_NECK) Then
+          Vmom(ihli)= (ro(ihli,1)+ro(ihli,2))/(QLMLEF+QLMRIG)
+       Else
+          Vmom(ihli)= - (ro(ihli,1)+ro(ihli,2))/(QLMLEF+QLMRIG)
+       End If
     End Do !ihli
-    !
+    
     ! Form matrix of the fragment distance operator in HO basis
     nd=id(ib); nd2=nd*nd; im=ia(ib)
     ! sum over gauss integration points
