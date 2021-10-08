@@ -4811,8 +4811,20 @@ Contains
     Real(pr),Dimension(2) :: pUr,pUt,pUNr,pUNz,pUDr,pUDj,pUFIZ,pUZFI,pUFIR,pURFI
     Real(pr),Dimension(2) :: tUr,tUt,tUNr,tUNz,tUDr,tUDj,tUFIZ,tUZFI,tUFIR,tURFI
     Real(pr), Save :: ALAMBDA=0.0_pr,AEPSI=1.0_pr,CSPR=1.0_pr
+    Real(pr) :: QLMLEF,QLMRIG
+    Integer(ipr) :: LAMACT,I_TYPE
     !
 
+
+!    If(.Not.Allocated(QLMTOT)) Allocate(QLMTOT(0:lambdaMax,0:1),QLMPRO(0:lambdaMax,0:1))
+!    I_TYPE=1
+!    Do LAMACT=0,lambdaMax
+!       Call QLMFRA(Z_NECK,LAMACT,QLMLEF,QLMRIG,CENLEF,CENRIG,I_TYPE)
+!       QLMTOT(LAMACT,0) = QLMLEF
+!       QLMTOT(LAMACT,1) = QLMRIG
+!    End Do
+    !
+    
     
     If (IDEBUG.Eq.1) Call get_CPU_time('field',0)
     !
@@ -5024,6 +5036,9 @@ Contains
              ic = ic +1
           End If
           ! constraining potential
+
+
+          
           If (numberCons.Gt.0) Then
              z=fh(ihli); rrr=fl(ihli)**2
 
@@ -5039,10 +5054,20 @@ Contains
                 pUr(it)= pUr(it) - neckLag*Exp(-((z-Z_NECK*bz)/AN_VAL)**2)
              End If
              If(dfrag_constraints) Then
-                pUr(it)= pUr(it) - dfragLag*DFRAG
+                If (z.le.Z_NECK*bz) Then
+                   pUr(it)= pUr(it) + dfragLag*z/bz*ro(ihli,it)!/QLMLEF
+                Else
+                   pUr(it)= pUr(it) - dfragLag*z/bz*ro(ihli,it)!/QLMRIG
+                End If
              End If
              If(csi_constraints) Then
-                pUr(it)= pUr(it) - csiLag*CSI
+                If (z.le.Z_NECK*bz) Then
+                   pUr(it)= pUr(it) + csiLag*ro(ihli,it)!/QLMLEF
+                Else
+                   pUr(it)= pUr(it) - csiLag*ro(ihli,it)!/QLMRIG
+                End If
+!                pUr(it)=pUr(it)/(QLMRIG+QLMLEF)
+                
              End If             
             
 
@@ -5162,6 +5187,8 @@ Contains
     Integer(ipr) :: ihli,lambda,icons,ic
     Real(pr) :: z,rrr
     Real(pr), Dimension(0:8) :: Qval
+    Real(pr) :: QLMLEF,QLMRIG
+    Integer(ipr) :: LAMACT,I_TYPE
     ! fields
 
     ic = 0
@@ -5176,6 +5203,16 @@ Contains
     End If
     
     ! Regular multipole moments    
+
+    If(.Not.Allocated(QLMTOT)) Allocate(QLMTOT(0:lambdaMax,0:1),QLMPRO(0:lambdaMax,0:1))
+    I_TYPE=1
+    Do LAMACT=0,lambdaMax
+       Call QLMFRA(Z_NECK,LAMACT,QLMLEF,QLMRIG,CENLEF,CENRIG,I_TYPE)
+       QLMTOT(LAMACT,0) = QLMLEF
+       QLMTOT(LAMACT,1) = QLMRIG
+    End Do
+    !
+
     
     Do icons=1,numberCons-ic
        lambda=multLambda(icons)
@@ -5203,7 +5240,12 @@ Contains
        End If
        
        If (dfrag_constraints.and.ic.gt.0) Then
-          qfield(ihli,lambdaMax+2) = DFRAG
+          If (z.le.Z_NECK*bz) Then
+             qfield(ihli,lambdaMax+2) = -z*(ro(ihli,1)+ro(ihli,2))/QLMLEF
+          Else
+             qfield(ihli,lambdaMax+2) = z*(ro(ihli,1)+ro(ihli,2))/QLMRIG
+          End If
+
           ic = ic -1
        End If
 
@@ -5253,6 +5295,7 @@ Contains
       ! Position of the centers of mass  of the fragments
     Call center_of_mass(Z_NECK,CENLEF,CENRIG)
     Call DFRAGCALC()
+    print *,DFRAG
     ! Mass multipole moments in the fragment intrinsic frame
     If(.Not.Allocated(QLMTOT)) Allocate(QLMTOT(0:lambdaMax,0:1),QLMPRO(0:lambdaMax,0:1))
     I_TYPE=1
