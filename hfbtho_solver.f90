@@ -4816,13 +4816,13 @@ Contains
     !
 
 
-!    If(.Not.Allocated(QLMTOT)) Allocate(QLMTOT(0:lambdaMax,0:1),QLMPRO(0:lambdaMax,0:1))
-!    I_TYPE=1
-!    Do LAMACT=0,lambdaMax
-!       Call QLMFRA(Z_NECK,LAMACT,QLMLEF,QLMRIG,CENLEF,CENRIG,I_TYPE)
-!       QLMTOT(LAMACT,0) = QLMLEF
-!       QLMTOT(LAMACT,1) = QLMRIG
-!    End Do
+    If(.Not.Allocated(QLMTOT)) Allocate(QLMTOT(0:lambdaMax,0:1),QLMPRO(0:lambdaMax,0:1))
+    I_TYPE=1
+    Do LAMACT=0,lambdaMax
+       Call QLMFRA(Z_NECK,LAMACT,QLMLEF,QLMRIG,CENLEF,CENRIG,I_TYPE)
+       QLMTOT(LAMACT,0) = QLMLEF
+       QLMTOT(LAMACT,1) = QLMRIG
+    End Do
     !
     
     
@@ -5055,9 +5055,9 @@ Contains
              End If
              If(dfrag_constraints) Then
                 If (z.le.Z_NECK*bz) Then
-                   pUr(it)= pUr(it) + dfragLag*z/bz*ro(ihli,it)!/QLMLEF
+                   pUr(it)= pUr(it) + dfragLag*z*ro(ihli,it)/QLMLEF
                 Else
-                   pUr(it)= pUr(it) - dfragLag*z/bz*ro(ihli,it)!/QLMRIG
+                   pUr(it)= pUr(it) - dfragLag*z*ro(ihli,it)/QLMRIG
                 End If
              End If
              If(csi_constraints) Then
@@ -5294,8 +5294,6 @@ Contains
     Call QNFIND()
       ! Position of the centers of mass  of the fragments
     Call center_of_mass(Z_NECK,CENLEF,CENRIG)
-    Call DFRAGCALC()
-    print *,DFRAG
     ! Mass multipole moments in the fragment intrinsic frame
     If(.Not.Allocated(QLMTOT)) Allocate(QLMTOT(0:lambdaMax,0:1),QLMPRO(0:lambdaMax,0:1))
     I_TYPE=1
@@ -5304,6 +5302,10 @@ Contains
        QLMTOT(LAMACT,0) = QLMLEF
        QLMTOT(LAMACT,1) = QLMRIG
     End Do
+
+    Call DFRAGCALC()
+    print *,DFRAG
+
     Call CSICALC()
     
     
@@ -7097,7 +7099,7 @@ Contains
         !Call neck()
         ! Position of the fragment centers of mass
        Call center_of_mass(Z_NECK,CENLEF,CENRIG)
-       Call DFRAGCALC()
+
         ! Mass multipole moments in the fragment intrinsic frame
         If(.Not.Allocated(QLMTOT)) Allocate(QLMTOT(0:lambdaMax,0:1),QLMPRO(0:lambdaMax,0:1))
         I_TYPE=1
@@ -7106,6 +7108,9 @@ Contains
            QLMTOT(LAMACT,0) = QLMLEF
            QLMTOT(LAMACT,1) = QLMRIG
         End Do
+
+        Call DFRAGCALC()
+        
         Call CSICALC()
 
         ! Charge of the fission fragments

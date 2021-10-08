@@ -1301,7 +1301,7 @@ Contains
   !====================================================================
   Subroutine DFRAGCALC()
 
-    DFRAG = CENRIG-CENLEF
+    DFRAG = (CENRIG/QLMTOT(0,1)-CENLEF/QLMTOT(0,0))
     dfragValue = DFRAG
 
   End Subroutine DFRAGCALC
@@ -1313,7 +1313,7 @@ Contains
 
   Subroutine CSICALC()
 
-    CSI = (QLMTOT(0,0)-QLMTOT(0,1))/(QLMTOT(0,0)+QLMTOT(0,1))    
+    CSI = (QLMTOT(0,1)-QLMTOT(0,0))/(QLMTOT(0,0)+QLMTOT(0,1))    
     csiValue = CSI
 
   End Subroutine CSICALC
@@ -1342,13 +1342,13 @@ Contains
     !
 
 
- !   If(.Not.Allocated(QLMTOT)) Allocate(QLMTOT(0:lambdaMax,0:1),QLMPRO(0:lambdaMax,0:1))
- !   I_TYPE=1
- !   Do LAMACT=0,lambdaMax
- !      Call QLMFRA(Z_NECK,LAMACT,QLMLEF,QLMRIG,CENLEF,CENRIG,I_TYPE)
- !      QLMTOT(LAMACT,0) = QLMLEF
- !      QLMTOT(LAMACT,1) = QLMRIG
- !   End Do
+    If(.Not.Allocated(QLMTOT)) Allocate(QLMTOT(0:lambdaMax,0:1),QLMPRO(0:lambdaMax,0:1))
+    I_TYPE=1
+    Do LAMACT=0,lambdaMax
+       Call QLMFRA(Z_NECK,LAMACT,QLMLEF,QLMRIG,CENLEF,CENRIG,I_TYPE)
+       QLMTOT(LAMACT,0) = QLMLEF
+       QLMTOT(LAMACT,1) = QLMRIG
+    End Do
     !
     
     Allocate(Vmom(1:nghl))
@@ -1360,9 +1360,9 @@ Contains
     Do ihli = 1,nghl
        z=fh(ihli)
        If (z.le.Z_NECK*bz) Then
-          Vmom(ihli)= -z/bz*(ro(ihli,1)+ro(ihli,2))!/QLMLEF
+          Vmom(ihli)= -z*(ro(ihli,1)+ro(ihli,2))/QLMLEF
        Else
-          Vmom(ihli)=  z/bz*(ro(ihli,1)+ro(ihli,2))!/QLMRIG
+          Vmom(ihli)=  z*(ro(ihli,1)+ro(ihli,2))/QLMRIG
        End If
     End Do !ihli
     !
